@@ -22,7 +22,7 @@ exports.UserView = function (reqq, res) {
                 if (err) res.status(500).send("error");
                 var req = new sql.Request(conn);
                 req.query("select *from [User] where UserName = '" + reqq.params.Data + "'", function (err, kq) {
-                    if (err) res.status(500).send(error);
+                    if (err) res.status(500).send("error");
                     else if (typeof kq.recordset[0] != 'undefined') {
                         res.send(kq.recordset[0]);
                     }
@@ -50,6 +50,10 @@ exports.DataView = function (reqq, res) {
             XMTDK: 0, XMTTK: 0, XMTCK: 0,
             XMLDK: 0, XMLTK: 0, XMLCK: 0,
             TONGDK: 0, TONGTK: 0, TONGCK: 0,
+            OTXTB: 0, OTXDV: 0, OTXDR: 0, OTXMV: 0,
+            XMXTB: 0, XMXDV: 0, XMXDR: 0, XMXMV: 0,
+            XDXTB: 0, XDXDV: 0, XDXDR: 0, XDXMV: 0,
+            TONGXTB: 0, TONGXDV: 0, TONGXDR: 0, TONGXMV: 0,
         };
         var dateFrom = new Date(reqq.params.DateF);
         var dateF =
@@ -73,15 +77,36 @@ exports.DataView = function (reqq, res) {
         var conn = new sql.ConnectionPool(config);
         //5.
         conn.connect(function (err) {
-            if (err) res.status(500).send(error);
+            if (err) res.status(500).send("error");
             var req = new sql.Request(conn);
             //var str = "select *from OUT where TimeEntry >= '" + dateF + "' and TimeEntry <= '" + dateT + "'";
             var str = "select *from OUT";
             req.query(str, function (err, kq) {
-                if (err) res.status(500).send(error);
+                if (err) res.status(500).send("error");
                 else if (typeof kq.recordset[0] != 'undefined') {
                     kq.recordset.forEach(k => {
-                        if (k.TimeOut < dateFrom) {
+                        var TimeEntry = new Date(k.TimeEntry);
+                        TimeEntry.setHours(TimeEntry.getHours() - 7);
+                        var TimeOut = new Date(k.TimeOut);
+                        TimeOut.setHours(TimeOut.getHours() - 7);
+                        //
+                        if(TimeEntry >= dateFrom && TimeEntry <= dateEnd)
+                        {
+                            if (k.VehicleTypeName.toLowerCase() == 'oto') {
+                                listOUT.OTXDV = listOUT.OTXDV + 1;
+                                listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                            }
+                            else if (k.VehicleTypeName.toLowerCase() == 'xm') {
+                                listOUT.XMXDV = listOUT.XMXDV + 1;
+                                listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                            }
+                            else if (k.VehicleTypeName.toLowerCase() == 'xd') {
+                                listOUT.XDXDV = listOUT.XDXDV + 1;
+                                listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                            }
+                        }
+
+                        if (TimeOut < dateFrom) {
                             if (k.VehicleTypeName.toLowerCase() == "oto") {
                                 listOUT.OTLDK = listOUT.OTLDK + k.Amount;
                                 listOUT.TONGDK = listOUT.TONGDK + k.Amount;
@@ -92,17 +117,46 @@ exports.DataView = function (reqq, res) {
                             }
 
                         }
-                        else if (k.TimeOut >= dateFrom && k.TimeOut <= dateEnd) {
-                            if (k.VehicleTypeName.toLowerCase() == "oto") {
+                        else if (TimeOut >= dateFrom && TimeOut <= dateEnd) {
+                            if (k.VehicleTypeName.toLowerCase() == 'oto') {
                                 listOUT.OTLTK = listOUT.OTLTK + k.Amount;
                                 listOUT.TONGTK = listOUT.TONGTK + k.Amount;
+                                //
+                                listOUT.OTXDR = listOUT.OTXDR + 1;
+                                listOUT.TONGXDR = listOUT.TONGXDR + 1;
+                                //
+                                if(k.Status == 'lost')
+                                {
+                                    listOUT.OTXMV = listOUT.OTXMV + 1;
+                                    listOUT.TONGXMV = listOUT.TONGXMV + 1;
+                                }
                             }
-                            else if (k.VehicleTypeName.toLowerCase() == "xm") {
+                            else if (k.VehicleTypeName.toLowerCase() == 'xm') {
                                 listOUT.XMLTK = listOUT.XMLTK + k.Amount;
                                 listOUT.TONGTK = listOUT.TONGTK + k.Amount;
+                                //
+                                listOUT.XMXDR = listOUT.XMXDR + 1;
+                                listOUT.TONGXDR = listOUT.TONGXDR + 1;
+                                //
+                                if(k.Status == "lost")
+                                {
+                                    listOUT.XMXMV = listOUT.XMXMV + 1;
+                                    listOUT.TONGXMV = listOUT.TONGXMV + 1;
+                                }
+                            }
+                            else if (k.VehicleTypeName.toLowerCase() == 'xd')  {
+                                listOUT.XDXDR = listOUT.XDXDR + 1;
+                                listOUT.TONGXDR = listOUT.TONGXDR + 1;
+                                //
+                                if(k.Status == "lost")
+                                {
+                                    listOUT.XDXMV = listOUT.XDXMV + 1;
+                                    listOUT.TONGXMV = listOUT.TONGXMV + 1;
+                                }
                             }
                         }
-                        if (k.TimeOut <= dateEnd) {
+                        
+                        if (TimeOut <= dateEnd) {
                             if (k.VehicleTypeName.toLowerCase() == "oto") {
                                 listOUT.OTLCK = listOUT.OTLCK + k.Amount;
                                 listOUT.TONGCK = listOUT.TONGCK + k.Amount;
@@ -114,11 +168,10 @@ exports.DataView = function (reqq, res) {
                         }
 
                     })
-                    DataView2(reqq, res, listOUT, dateFrom, dateEnd);
+                   
                 }
-                else
-                    res.send(listOUT)
 
+                DataView2(reqq, res, listOUT, dateFrom, dateEnd);
                 conn.close();
             })
         }
@@ -137,15 +190,19 @@ var DataView2 = function (reqq, res, listOUT, dateFrom, dateEnd) {
         var conn = new sql.ConnectionPool(config);
         //5.
         conn.connect(function (err) {
-            if (err) res.status(500).send(error);
+            if (err) res.status(500).send("error");
             var req = new sql.Request(conn);
             //var str = "select *from OUT where TimeEntry >= '" + dateF + "' and TimeEntry <= '" + dateT + "'";
             var str = "select *from Receipt";
             req.query(str, function (err, kq) {
-                if (err) res.status(500).send(error);
+                if (err) res.status(500).send("error");
                 else if (typeof kq.recordset[0] != 'undefined') {
                     kq.recordset.forEach(k => {
-                        if (k.DateCreate < dateFrom) {
+                        var DateCreate = new Date(k.DateCreate);
+                        DateCreate.setHours(DateCreate.getHours() - 7);
+
+                        //
+                        if (DateCreate < dateFrom) {
                             if (k.VehicleTypeName.toLowerCase() == "oto") {
                                 listOUT.OTTDK = listOUT.OTTDK + k.Amount;
                                 listOUT.TONGDK = listOUT.TONGDK + k.Amount;
@@ -156,7 +213,7 @@ var DataView2 = function (reqq, res, listOUT, dateFrom, dateEnd) {
                             }
 
                         }
-                        else if (k.DateCreate >= dateFrom && k.DateCreate <= dateEnd) {
+                        else if (DateCreate >= dateFrom && k.DateCreate <= dateEnd) {
                             if (k.VehicleTypeName.toLowerCase() == "oto") {
                                 listOUT.OTTTK = listOUT.OTTTK + k.Amount;
                                 listOUT.TONGTK = listOUT.TONGTK + k.Amount;
@@ -166,7 +223,7 @@ var DataView2 = function (reqq, res, listOUT, dateFrom, dateEnd) {
                                 listOUT.TONGTK = listOUT.TONGTK + k.Amount;
                             }
                         }
-                        if (k.DateCreate <= dateEnd) {
+                        if (DateCreate <= dateEnd) {
                             if (k.VehicleTypeName.toLowerCase() == "oto") {
                                 listOUT.OTTCK = listOUT.OTTCK + k.Amount;
                                 listOUT.TONGCK = listOUT.TONGCK + k.Amount;
@@ -176,6 +233,79 @@ var DataView2 = function (reqq, res, listOUT, dateFrom, dateEnd) {
                                 listOUT.TONGCK = listOUT.TONGCK + k.Amount;
                             }
                         }
+
+                    })
+                   
+                }
+                DataView3(reqq, res, listOUT, dateFrom, dateEnd);
+
+                conn.close();
+            })
+        }
+
+        );
+
+
+    } catch (error) {
+        res.status(500).send("error");
+    }
+};
+
+var DataView3 = function (reqq, res, listOUT, dateFrom, dateEnd) {
+    try {
+
+        var conn = new sql.ConnectionPool(config);
+        //5.
+        conn.connect(function (err) {
+            if (err) res.status(500).send("error");
+            var req = new sql.Request(conn);
+            //var str = "select *from OUT where TimeEntry >= '" + dateF + "' and TimeEntry <= '" + dateT + "'";
+            var str = "select *from [IN]";
+            req.query(str, function (err, kq) {
+                if (err) res.status(500).send("error");
+                else if (typeof kq.recordset[0] != 'undefined') {
+                    kq.recordset.forEach(k => {
+                        var TimeEntry = new Date(k.TimeEntry);
+                        TimeEntry.setHours(TimeEntry.getHours() - 7);
+                        var TimeOut = new Date(k.TimeOut);
+                        TimeOut.setHours(TimeOut.getHours() - 7);
+                        //
+                        //Xe trong bai
+                        if(k.VehicleTypeName.toLowerCase() == "oto")
+                        {
+                            listOUT.OTXTB = listOUT.OTXTB + 1;
+                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                        }
+                        else if(k.VehicleTypeName.toLowerCase() == "xm")
+                        {
+                            listOUT.XMXTB = listOUT.XMXTB + 1;
+                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                        }
+                        else if(k.VehicleTypeName.toLowerCase() == "xd")
+                        {
+                            listOUT.XDXTB = listOUT.XDXTB + 1;
+                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                        }
+                        //Xe da vao
+                       if(TimeEntry >= dateFrom && TimeEntry <= dateEnd)
+                       {
+                        if(k.VehicleTypeName.toLowerCase() == "oto")
+                        {
+                            listOUT.OTXDV = listOUT.OTXDV + 1;
+                            listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                        }
+                        else if(k.VehicleTypeName.toLowerCase() == "xm")
+                        {
+                            listOUT.XMXDV = listOUT.XMXDV + 1;
+                            listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                        }
+                        else if(k.VehicleTypeName.toLowerCase() == "xd")
+                        {
+                            listOUT.XDXDV = listOUT.XDXDV + 1;
+                            listOUT.TONGXDV = listOUT.TONGXDV + 1;
+                        }
+
+                       }
 
                     })
                     res.send(listOUT)
