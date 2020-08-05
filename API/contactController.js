@@ -167,6 +167,24 @@ exports.DataView = function (reqq, res) {
                             }
                         }
 
+                        if(TimeEntry <= dateEnd && TimeOut > dateEnd)
+                        {
+                            if (k.VehicleTypeName.toLowerCase() == 'oto') {
+                                listOUT.OTXTB = listOUT.OTXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
+                            else if (k.VehicleTypeName.toLowerCase() == 'xm') {
+                                listOUT.XMXTB = listOUT.XMXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
+                            else if (k.VehicleTypeName.toLowerCase() == 'xd') {
+                                listOUT.XDXTB = listOUT.XDXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
+                        }
+                       
+ 
+
                     })
                    
                 }
@@ -271,21 +289,25 @@ var DataView3 = function (reqq, res, listOUT, dateFrom, dateEnd) {
                         TimeOut.setHours(TimeOut.getHours() - 7);
                         //
                         //Xe trong bai
-                        if(k.VehicleTypeName.toLowerCase() == "oto")
+                        if(TimeEntry <= dateEnd)
                         {
-                            listOUT.OTXTB = listOUT.OTXTB + 1;
-                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            if(k.VehicleTypeName.toLowerCase() == "oto")
+                            {
+                                listOUT.OTXTB = listOUT.OTXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
+                            else if(k.VehicleTypeName.toLowerCase() == "xm")
+                            {
+                                listOUT.XMXTB = listOUT.XMXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
+                            else if(k.VehicleTypeName.toLowerCase() == "xd")
+                            {
+                                listOUT.XDXTB = listOUT.XDXTB + 1;
+                                listOUT.TONGXTB = listOUT.TONGXTB + 1;
+                            }
                         }
-                        else if(k.VehicleTypeName.toLowerCase() == "xm")
-                        {
-                            listOUT.XMXTB = listOUT.XMXTB + 1;
-                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
-                        }
-                        else if(k.VehicleTypeName.toLowerCase() == "xd")
-                        {
-                            listOUT.XDXTB = listOUT.XDXTB + 1;
-                            listOUT.TONGXTB = listOUT.TONGXTB + 1;
-                        }
+                        
                         //Xe da vao
                        if(TimeEntry >= dateFrom && TimeEntry <= dateEnd)
                        {
