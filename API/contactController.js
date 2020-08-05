@@ -2,7 +2,7 @@
 let config = {
     user: "sa",
     password: "sa123456@",
-    server: "localhost",
+    server: "14.232.210.14",
     database: "HITParking24102019",
     "options": {
         "enableArithAbort": true
